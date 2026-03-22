@@ -1,0 +1,75 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bukmi-app
+  namespace: payload-cms
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bukmi-app
+  template:
+    metadata:
+      labels:
+        app: bukmi-app
+    spec:
+      containers:
+      - name: payload
+        image: bukmi-app:v1
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 3000
+        envFrom:
+        - secretRef:
+            name: payload-secrets
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bukmi-app-service
+  namespace: payload-cms
+spec:
+  selector:
+    app: bukmi-app
+  ports:
+  - port: 80
+    targetPort: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bukmi-app-ingress
+  namespace: payload-cms
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod-dns
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    external-dns.alpha.kubernetes.io/hostname: bukmi.app, www.bukmi.app
+    external-dns.alpha.kubernetes.io/target: 46.225.33.60
+spec:
+  ingressClassName: traefik
+  tls:
+  - hosts:
+    - bukmi.app
+    - www.bukmi.app
+    secretName: bukmi-app-tls
+  rules:
+  - host: bukmi.app
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: bukmi-app-service
+            port:
+              number: 80
+  - host: www.bukmi.app
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: bukmi-app-service
+            port:
+              number: 80
