@@ -1,0 +1,31 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: external-dns
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://kubernetes-sigs.github.io/external-dns/
+    chart: external-dns
+    targetRevision: 1.14.0
+    helm:
+      values: |
+        provider: hetzner
+        env:
+          - name: HETZNER_TOKEN
+            valueFrom:
+              secretKeyRef:
+                name: hetzner-dns-credentials
+                key: api-key
+        txtOwnerId: bukmi-prod-v1
+        policy: sync
+        extraArgs:
+          - --ip-family=ipv4
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: external-dns
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
