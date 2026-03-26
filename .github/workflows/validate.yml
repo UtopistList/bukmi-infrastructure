@@ -1,0 +1,21 @@
+name: Infrastructure Validation
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  validate-yaml:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+        
+      - name: YAML Lint
+        uses: ibiqlik/action-yamllint@v3
+        with:
+          format: parsable
+          strict: false
+          file_or_dir: .
